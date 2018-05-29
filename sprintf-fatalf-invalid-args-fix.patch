@@ -1,0 +1,36 @@
+From 5d78b07dfaa8842c012de0c55cbbc1ac28fe1a23 Mon Sep 17 00:00:00 2001
+From: Jiri Kucera <jkucera@redhat.com>
+Date: Thu, 15 Feb 2018 23:11:09 +0100
+Subject: [PATCH] Invalid format string and forgotten arguments
+
+---
+ charset/ascii.go        | 2 +-
+ charset/charset_test.go | 2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/charset/ascii.go b/charset/ascii.go
+index ccf3a35..0e73d06 100644
+--- a/charset/ascii.go
++++ b/charset/ascii.go
+@@ -21,7 +21,7 @@ type codePointError struct {
+ }
+ 
+ func (e *codePointError) Error() string {
+-	return fmt.Sprintf("Parse error at index %n: Code point %n is undefined in %s", e.i, e.cp, e.charset)
++	return fmt.Sprintf("Parse error at index %d: Code point %d is undefined in %s", e.i, e.cp, e.charset)
+ }
+ 
+ func (strict translateFromASCII) Translate(data []byte, eof bool) (int, []byte, error) {
+diff --git a/charset/charset_test.go b/charset/charset_test.go
+index fda2d85..03d0782 100644
+--- a/charset/charset_test.go
++++ b/charset/charset_test.go
+@@ -177,7 +177,7 @@ func testTranslatingReader(t *testing.T, tr charset.Translator, inReader, outRea
+ 	}
+ 	err = checkTranslation(data, outbuf.Bytes())
+ 	if err != nil {
+-		t.Fatalf("translator %T, readers %T, %T, %v\n", err)
++		t.Fatalf("translator %T, readers %T, %T, %v\n", tr, inr, outr, err)
+ 	}
+ }
+ 

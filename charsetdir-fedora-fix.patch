@@ -1,0 +1,26 @@
+From a9230e9179138c3ae8e795449a255ac0617ca7e4 Mon Sep 17 00:00:00 2001
+From: Jiri Kucera <jkucera@redhat.com>
+Date: Thu, 15 Feb 2018 11:34:44 +0100
+Subject: [PATCH] /usr/local/lib -> /usr/share
+
+According to Fedora Packaging Guidelines, there should be no files and
+directories installed to /usr/local
+
+Datadir prefix (/usr/share) should be synced with rpm %{_datadir}
+---
+ charset/file.go | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/charset/file.go b/charset/file.go
+index a0c2622..1b93da7 100644
+--- a/charset/file.go
++++ b/charset/file.go
+@@ -21,7 +21,7 @@ func RegisterDataFile(name string, open func() (io.ReadCloser, error)) {
+ // CharsetDir gives the location of the default data file directory.
+ // This directory will be used for files with names that have not
+ // been registered with RegisterDataFile.
+-var CharsetDir = "/usr/local/lib/go-charset/datafiles"
++var CharsetDir = "@_DATADIR@/go-charset/datafiles"
+ 
+ func readFile(name string) (data []byte, err error) {
+ 	var r io.ReadCloser
