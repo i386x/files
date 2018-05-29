@@ -1,0 +1,22 @@
+From c6a872d25009feb4cb1bfa1c9fdfabf8aa5dfe2d Mon Sep 17 00:00:00 2001
+From: Jiri Kucera <jkucera@redhat.com>
+Date: Mon, 12 Feb 2018 17:16:59 +0100
+Subject: [PATCH] Added missing format string
+
+---
+ mux_test.go | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/mux_test.go b/mux_test.go
+index 7961654..316ef20 100644
+--- a/mux_test.go
++++ b/mux_test.go
+@@ -89,7 +89,7 @@ func TestHTTPMux(t *testing.T) {
+ 
+ 	resp, err = new(http.Client).Do(req)
+ 	if err != nil {
+-		t.Fatalf("failed to make HTTP request", err)
++		t.Fatalf("failed to make HTTP request: %v", err)
+ 	}
+ 
+ 	body, err := ioutil.ReadAll(resp.Body)
