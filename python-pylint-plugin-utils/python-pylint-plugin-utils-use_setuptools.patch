@@ -1,0 +1,21 @@
+From 6d9b812e229cbf224ee1c10549d18d7827e53b8d Mon Sep 17 00:00:00 2001
+From: jakirkham <jakirkham@gmail.com>
+Date: Wed, 15 Mar 2017 09:39:56 -0400
+Subject: [PATCH] Just use setuptools.
+
+---
+ setup.py | 3 +--
+ 1 file changed, 1 insertion(+), 2 deletions(-)
+
+diff --git a/setup.py b/setup.py
+index 9735c9f..8d84080 100644
+--- a/setup.py
++++ b/setup.py
+@@ -1,6 +1,5 @@
+ # -*- coding: UTF-8 -*-
+-from distutils.core import setup
+-from setuptools import find_packages
++from setuptools import find_packages, setup
+ 
+ _version = "0.2.6"
+ _packages = find_packages(exclude=["*.tests", "*.tests.*", "tests.*", "tests"])
