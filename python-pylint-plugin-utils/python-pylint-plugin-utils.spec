@@ -35,6 +35,7 @@ URL:            https://github.com/landscapeio/pylint-plugin-utils
 Source0:        https://github.com/PyCQA/%{repo}/archive/%{commit}/%{repo}-%{shortcommit}.tar.gz
 # Upstream changeset 9c522b590c66951306e837d89a214aaafb519076
 Patch0:         %{pypkgname}-use_setuptools.patch
+Patch1:         %{pypkgname}-do_not_depend_on_astroid.patch
 
 BuildArch:      noarch
 
@@ -49,12 +50,12 @@ BuildArch:      noarch
 BuildRequires:  python%%{-V:%%{-V*}}%%{!-V:2}-devel\
 BuildRequires:  python%%{-V:%%{-V*}}%%{!-V:2}-setuptools\
 BuildRequires:  python%%{-V:%%{-V*}}%%{!-V:2}-pylint\
-BuildRequires:  python%%{-V:%%{-V*}}%%{!-V:2}-astroid\
+#BuildRequires:  python%%{-V:%%{-V*}}%%{!-V:2}-astroid\
 \
 # - imported by `pylint_plugin_utils/__init__.py`\
 Requires:       python%%{-V:%%{-V*}}%%{!-V:2}-pylint\
-# - noted in `setup.py`\
-Requires:       python%%{-V:%%{-V*}}%%{!-V:2}-astroid\
+# - noted in `setup.py`, but not used\
+#Requires:       python%%{-V:%%{-V*}}%%{!-V:2}-astroid\
 }
 
 

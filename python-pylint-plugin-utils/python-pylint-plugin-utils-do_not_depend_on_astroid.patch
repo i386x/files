@@ -1,0 +1,13 @@
+diff --git a/setup.py b/setup.py
+index 9735c9f..c4e6022 100644
+--- a/setup.py
++++ b/setup.py
+@@ -28,7 +28,7 @@ setup(
+     author_email='code@landscape.io',
+     description=_short_description,
+     version=_version,
+-    install_requires=['pylint', 'astroid'],
++    install_requires=['pylint'],
+     packages=_packages,
+     license='GPLv2',
+     classifiers=_classifiers,
