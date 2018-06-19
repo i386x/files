@@ -1,0 +1,22 @@
+diff --git a/__pkginfo__.py b/__pkginfo__.py
+index b9f652f..6baf1b1 100644
+--- a/__pkginfo__.py
++++ b/__pkginfo__.py
+@@ -37,7 +37,6 @@ author_email = "contact@logilab.fr"
+ 
+ 
+ from os.path import join
+-scripts = [join('bin', 'logilab-pytest')]
+ include_dirs = [join('test', 'data')]
+ 
+ install_requires = [
+diff --git a/setup.py b/setup.py
+index c565ee1..bfd16bd 100644
+--- a/setup.py
++++ b/setup.py
+@@ -50,5 +50,4 @@ setup(
+     namespace_packages=[pkginfo['subpackage_of']],
+     install_requires=pkginfo['install_requires'],
+     tests_require=pkginfo['tests_require'],
+-    scripts=pkginfo['scripts'],
+ )

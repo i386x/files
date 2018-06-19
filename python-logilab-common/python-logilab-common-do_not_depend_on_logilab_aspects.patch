@@ -1,0 +1,61 @@
+diff --git a/logilab/common/pytest.py b/logilab/common/pytest.py
+index c644a61..11fe3a5 100644
+--- a/logilab/common/pytest.py
++++ b/logilab/common/pytest.py
+@@ -563,7 +563,8 @@ def make_parser():
+     parser.add_option('-t', dest='testdir', default=None,
+                       help="directory where the tests will be found")
+     parser.add_option('-d', dest='dbc', default=False,
+-                      action="store_true", help="enable design-by-contract")
++                      action="store_true", help="enable design-by-contract "
++                      "(has no effect, supported for backward compatibility only)")
+     # unittest_main options provided and passed through logilab-pytest
+     parser.add_option('-v', '--verbose', callback=rebuild_cmdline,
+                       action="callback", help="Verbose output")
+@@ -619,6 +620,8 @@ def parseargs(parser):
+         explicitfile = None
+     # someone wants DBC
+     testlib.ENABLE_DBC = options.dbc
++    # also set this module's `ENABLE_DBC`
++    globals()['ENABLE_DBC'] = options.dbc
+     newargs = parser.newargs
+     if options.skipped:
+         newargs.extend(['--skip', options.skipped])
+@@ -1268,19 +1271,11 @@ def enable_dbc(*args):
+ 
+     With arguments, return False if contracts can't or shouldn't be enabled,
+     otherwise weave ContractAspect with items passed as arguments.
++
++    Note: As `logilab.aspects` is Python 2 only, the contracts are dissabled
++    permanently.
+     """
+-    if not ENABLE_DBC:
+-        return False
+-    try:
+-        from logilab.aspects.weaver import weaver
+-        from logilab.aspects.lib.contracts import ContractAspect
+-    except ImportError:
+-        sys.stderr.write(
+-            'Warning: logilab.aspects is not available. Contracts disabled.')
+-        return False
+-    for arg in args:
+-        weaver.weave_module(arg, ContractAspect)
+-    return True
++    return False
+ 
+ 
+ # monkeypatch unittest and doctest (ouch !)
+diff --git a/logilab/common/testlib.py b/logilab/common/testlib.py
+index fa3e36e..8ae4261 100644
+--- a/logilab/common/testlib.py
++++ b/logilab/common/testlib.py
+@@ -29,7 +29,8 @@ Command line options:
+  -t  testdir -- directory where the tests will be found
+  -x  exclude -- add a test to exclude
+  -p  profile -- profiled execution
+- -d  dbc     -- enable design-by-contract
++ -d  dbc     -- enable design-by-contract (with no effect; this option
++                has been kept for backward compatibility)
+  -m  match   -- only run test matching the tag pattern which follow
+ 
+ If no non-option arguments are present, prefixes used are 'test',

@@ -1,0 +1,13 @@
+diff --git a/logilab/common/debugger.py b/logilab/common/debugger.py
+index 1f540a1..6ee46e7 100644
+--- a/logilab/common/debugger.py
++++ b/logilab/common/debugger.py
+@@ -44,7 +44,7 @@ import inspect
+ from logilab.common.compat import StringIO
+ 
+ try:
+-    from IPython import PyColorize
++    from IPython.utils import PyColorize
+ except ImportError:
+     def colorize(source, *args):
+         """fallback colorize function"""

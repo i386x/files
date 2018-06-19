@@ -1,0 +1,299 @@
+diff --git a/__pkginfo__.py b/__pkginfo__.py
+index b9f652f..2105071 100644
+--- a/__pkginfo__.py
++++ b/__pkginfo__.py
+@@ -46,7 +46,6 @@ install_requires = [
+ ]
+ tests_require = [
+     'pytz',
+-    'egenix-mx-base',
+ ]
+ 
+ if sys.version_info < (2, 7):
+diff --git a/logilab/common/__init__.py b/logilab/common/__init__.py
+index 796831a..42ba2af 100644
+--- a/logilab/common/__init__.py
++++ b/logilab/common/__init__.py
+@@ -44,7 +44,7 @@ IGNORED_EXTENSIONS = ('.pyc', '.pyo', '.elc', '~', '.swp', '.orig')
+ 
+ # set this to False if you've mx DateTime installed but you don't want your db
+ # adapter to use it (should be set before you got a connection)
+-USE_MX_DATETIME = True
++USE_MX_DATETIME = False
+ 
+ 
+ class attrdict(dict):
+diff --git a/logilab/common/configuration.py b/logilab/common/configuration.py
+index 7a54f1a..6f0b33a 100644
+--- a/logilab/common/configuration.py
++++ b/logilab/common/configuration.py
+@@ -198,7 +198,7 @@ def password_validator(optdict, name, value):
+     return optik_ext.check_password(None, name, value)
+ 
+ def date_validator(optdict, name, value):
+-    """validate and return a mx DateTime object for option of type 'date'"""
++    """validate and return a datetime object for option of type 'date'"""
+     return optik_ext.check_date(None, name, value)
+ 
+ def time_validator(optdict, name, value):
+diff --git a/logilab/common/date.py b/logilab/common/date.py
+index 1d13a77..4005c63 100644
+--- a/logilab/common/date.py
++++ b/logilab/common/date.py
+@@ -30,13 +30,9 @@ from calendar import monthrange, timegm
+ 
+ from six.moves import range
+ 
+-try:
+-    from mx.DateTime import RelativeDateTime, Date, DateTimeType
+-except ImportError:
+-    endOfMonth = None
+-    DateTimeType = datetime
+-else:
+-    endOfMonth = RelativeDateTime(months=1, day=-1)
++# For backward compatibility:
++endOfMonth = None
++DateTimeType = datetime
+ 
+ # NOTE: should we implement a compatibility layer between date representations
+ #       as we have in lgc.db ?
+@@ -93,24 +89,19 @@ FRENCH_MOBILE_HOLIDAYS = {
+ # XXX this implementation cries for multimethod dispatching
+ 
+ def get_step(dateobj, nbdays=1):
+-    # assume date is either a python datetime or a mx.DateTime object
+-    if isinstance(dateobj, date):
+-        return ONEDAY * nbdays
+-    return nbdays # mx.DateTime is ok with integers
++    assert isinstance(dateobj, date), repr(dateobj)
++    return ONEDAY * nbdays
+ 
+ def datefactory(year, month, day, sampledate):
+-    # assume date is either a python datetime or a mx.DateTime object
++    assert isinstance(sampledate, (datetime, date)), repr(sampledate)
+     if isinstance(sampledate, datetime):
+         return datetime(year, month, day)
+-    if isinstance(sampledate, date):
+-        return date(year, month, day)
+-    return Date(year, month, day)
++    # sampledate is date
++    return date(year, month, day)
+ 
+ def weekday(dateobj):
+-    # assume date is either a python datetime or a mx.DateTime object
+-    if isinstance(dateobj, date):
+-        return dateobj.weekday()
+-    return dateobj.day_of_week
++    assert isinstance(dateobj, date), repr(dateobj)
++    return dateobj.weekday()
+ 
+ def str2date(datestr, sampledate):
+     # NOTE: datetime.strptime is not an option until we drop py2.4 compat
+@@ -119,13 +110,16 @@ def str2date(datestr, sampledate):
+ 
+ def days_between(start, end):
+     if isinstance(start, date):
+-        delta = end - start
+-        # datetime.timedelta.days is always an integer (floored)
+-        if delta.seconds:
+-            return delta.days + 1
+-        return delta.days
+-    else:
+-        return int(math.ceil((end - start).days))
++        start = datetime(start.year, start.month, start.day)
++    if isinstance(end, date):
++        end = datetime(end.year, end.month, end.day)
++    assert isinstance(start, datetime), repr(start)
++    assert isinstance(end, datetime), repr(end)
++    delta = end - start
++    # datetime.timedelta.days is always an integer (floored)
++    if delta.seconds:
++        return delta.days + 1
++    return delta.days
+ 
+ def get_national_holidays(begin, end):
+     """return french national days off between begin and end"""
+@@ -180,10 +174,6 @@ def date_range(begin, end, incday=None, incmonth=None):
+     :param include: None (means no exclusion) or a function taking a
+                     date as parameter, and returning True if the date
+                     should be included.
+-
+-    When using mx datetime, you should *NOT* use incmonth argument, use instead
+-    oneDay, oneHour, oneMinute, oneSecond, oneWeek or endOfMonth (to enumerate
+-    months) as `incday` argument
+     """
+     assert not (incday and incmonth)
+     begin = todate(begin)
+@@ -217,15 +207,14 @@ def todate(somedate):
+     """return a date from a date (leaving unchanged) or a datetime"""
+     if isinstance(somedate, datetime):
+         return date(somedate.year, somedate.month, somedate.day)
+-    assert isinstance(somedate, (date, DateTimeType)), repr(somedate)
++    assert isinstance(somedate, date), repr(somedate)
+     return somedate
+ 
+ def totime(somedate):
+     """return a time from a time (leaving unchanged), date or datetime"""
+-    # XXX mx compat
++    assert isinstance(somedate, (time, date, datetime)), repr(somedate)
+     if not isinstance(somedate, time):
+         return time(somedate.hour, somedate.minute, somedate.second)
+-    assert isinstance(somedate, (time)), repr(somedate)
+     return somedate
+ 
+ def todatetime(somedate):
+@@ -233,7 +222,7 @@ def todatetime(somedate):
+     # take care, datetime is a subclass of date
+     if isinstance(somedate, datetime):
+         return somedate
+-    assert isinstance(somedate, (date, DateTimeType)), repr(somedate)
++    assert isinstance(somedate, date), repr(somedate)
+     return datetime(somedate.year, somedate.month, somedate.day)
+ 
+ def datetime2ticks(somedate):
+diff --git a/logilab/common/optik_ext.py b/logilab/common/optik_ext.py
+index 95489c2..aab6dc5 100644
+--- a/logilab/common/optik_ext.py
++++ b/logilab/common/optik_ext.py
+@@ -56,6 +56,8 @@ import time
+ from copy import copy
+ from os.path import exists
+ 
++from datetime import datetime
++
+ from six import integer_types
+ 
+ # python >= 2.3
+@@ -63,11 +65,8 @@ from optparse import OptionParser as BaseParser, Option as BaseOption, \
+      OptionGroup, OptionContainer, OptionValueError, OptionError, \
+      Values, HelpFormatter, NO_DEFAULT, SUPPRESS_HELP
+ 
+-try:
+-    from mx import DateTime
+-    HAS_MX_DATETIME = True
+-except ImportError:
+-    HAS_MX_DATETIME = False
++# For backward compatibility:
++HAS_MX_DATETIME = False
+ 
+ from logilab.common.textutils import splitstrip, TIME_UNITS, BYTE_UNITS, \
+     apply_units
+@@ -143,14 +142,13 @@ def check_file(option, opt, value):
+     msg = "option %s: file %r does not exist"
+     raise OptionValueError(msg % (opt, value))
+ 
+-# XXX use python datetime
+ def check_date(option, opt, value):
+     """check a file value
+     return the filepath
+     """
+     try:
+-        return DateTime.strptime(value, "%Y/%m/%d")
+-    except DateTime.Error :
++        return datetime.strptime(value, "%Y/%m/%d")
++    except ValueError:
+         raise OptionValueError(
+             "expected format of %s is yyyy/mm/dd" % opt)
+ 
+@@ -186,7 +184,7 @@ class Option(BaseOption):
+     """
+     TYPES = BaseOption.TYPES + ('regexp', 'csv', 'yn', 'named', 'password',
+                                 'multiple_choice', 'file', 'color',
+-                                'time', 'bytes')
++                                'time', 'bytes', 'date')
+     ATTRS = BaseOption.ATTRS + ['hide', 'level']
+     TYPE_CHECKER = copy(BaseOption.TYPE_CHECKER)
+     TYPE_CHECKER['regexp'] = check_regexp
+@@ -199,9 +197,7 @@ class Option(BaseOption):
+     TYPE_CHECKER['password'] = check_password
+     TYPE_CHECKER['time'] = check_time
+     TYPE_CHECKER['bytes'] = check_bytes
+-    if HAS_MX_DATETIME:
+-        TYPES += ('date',)
+-        TYPE_CHECKER['date'] = check_date
++    TYPE_CHECKER['date'] = check_date
+ 
+     def __init__(self, *opts, **attrs):
+         BaseOption.__init__(self, *opts, **attrs)
+diff --git a/logilab/common/umessage.py b/logilab/common/umessage.py
+index a0394bc..f5f5e5d 100644
+--- a/logilab/common/umessage.py
++++ b/logilab/common/umessage.py
+@@ -29,12 +29,8 @@ from datetime import datetime
+ 
+ from six import text_type, binary_type
+ 
+-try:
+-    from mx.DateTime import DateTime
+-except ImportError:
+-    DateTime = datetime
+-
+-import logilab.common as lgc
++# For backward compatibility:
++DateTime = datetime
+ 
+ 
+ def decode_QP(string):
+@@ -169,8 +165,6 @@ class UMessage:
+         if value is not None:
+             datetuple = parsedate(value)
+             if datetuple:
+-                if lgc.USE_MX_DATETIME:
+-                    return DateTime(*datetuple[:6])
+                 return datetime(*datetuple[:6])
+             elif not return_str:
+                 return None
+diff --git a/test/unittest_date.py b/test/unittest_date.py
+index 9ae444b..6dea033 100644
+--- a/test/unittest_date.py
++++ b/test/unittest_date.py
+@@ -28,11 +28,6 @@ from datetime import date, datetime, timedelta
+ from calendar import timegm
+ import pytz
+ 
+-try:
+-    from mx.DateTime import Date as mxDate, DateTime as mxDateTime, \
+-         now as mxNow, RelativeDateTime, RelativeDate
+-except ImportError:
+-    mxDate = mxDateTime = RelativeDateTime = mxNow = None
+ 
+ class DateTC(TestCase):
+     datecls = date
+@@ -148,8 +143,6 @@ class DateTC(TestCase):
+         self.assertListEqual(expected, r)
+ 
+     def test_utcdatetime(self):
+-        if self.datetimecls is mxDateTime:
+-            return
+         d = self.datetimecls(2014, 11, 26, 12, 0, 0, 57, tzinfo=pytz.utc)
+         d = utcdatetime(d)
+         self.assertEqual(d, self.datetimecls(2014, 11, 26, 12, 0, 0, 57))
+@@ -179,28 +172,5 @@ class DateTC(TestCase):
+         timestamp = timegm(d.timetuple())
+         self.assertEqual(datetime2ticks(d), timestamp * 1000)
+ 
+-
+-class MxDateTC(DateTC):
+-    datecls = mxDate
+-    datetimecls = mxDateTime
+-    timedeltacls = RelativeDateTime
+-    now = mxNow
+-
+-    def check_mx(self):
+-        if mxDate is None:
+-            self.skipTest('mx.DateTime is not installed')
+-
+-    def setUp(self):
+-        self.check_mx()
+-
+-    def test_month(self):
+-        """enumerate months"""
+-        r = list(date_range(self.datecls(2000, 1, 2), self.datecls(2000, 4, 4), endOfMonth))
+-        expected = [self.datecls(2000, 1, 2), self.datecls(2000, 2, 29), self.datecls(2000, 3, 31)]
+-        self.assertListEqual(r, expected)
+-        r = list(date_range(self.datecls(2000, 11, 30), self.datecls(2001, 2, 3), endOfMonth))
+-        expected = [self.datecls(2000, 11, 30), self.datecls(2000, 12, 31), self.datecls(2001, 1, 31)]
+-        self.assertListEqual(r, expected)
+-
+ if __name__ == '__main__':
+     unittest_main()
